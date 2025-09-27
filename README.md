@@ -1,145 +1,217 @@
 # ros2tree
 
-A ROS2 command extension that displays topics and nodes in a tree view format.
+A ROS2 command-line extension that displays topics, nodes, and services in a hierarchical tree format.
 
 ## Overview
 
-`ros2tree` provides an intuitive way to visualize the structure of your ROS2 system by displaying topics and nodes in a hierarchical tree format. This makes it easier to understand the organization and relationships within your ROS2 workspace.
-
-## Features
-
-- 🌳 **Tree View Display**: Hierarchical visualization of topics and nodes
-- 📡 **Topic Inspection**: View topics organized by namespace with type information
-- 🔧 **Node Inspection**: View nodes organized by namespace
-- 🔗 **Connection Analysis**: Show publisher/subscriber relationships
-- 🎨 **Unicode/ASCII Support**: Choose between Unicode symbols or ASCII characters
-- ⚡ **Fast Caching**: Efficient caching for improved performance
+ros2tree provides an intuitive way to visualize the structure of your ROS2 system. It organizes topics, nodes, and services by their namespace hierarchy, making it easier to understand complex ROS2 systems at a glance. The tool integrates seamlessly with the ros2 CLI, providing commands like `ros2 tree topics`, `ros2 tree nodes`, and `ros2 tree services`.
 
 ## Installation
 
-### From Source (Recommended for Development)
+### From GitHub Release (Recommended)
+
+Download the latest wheel file from the [GitHub releases](https://github.com/jerry73204/ros2tree/releases):
 
 ```bash
-# Clone and build with colcon
+pip install ros2tree-0.1.0-py3-none-any.whl
+```
+
+### Alternative: ROS2 Workspace Installation
+
+If you're working within a ROS2 workspace:
+
+```bash
 cd ~/ros2_ws/src
-git clone <your-repo-url> ros2tree
+git clone https://github.com/jerry73204/ros2tree.git
 cd ~/ros2_ws
 colcon build --packages-select ros2tree
 source install/setup.bash
-```
-
-### Alternative: Direct pip install
-
-```bash
-cd ros2tree
-pip install .
 ```
 
 ## Usage
 
 ### Basic Commands
 
+Display topics in a tree format:
 ```bash
-# View all topics in tree format
 ros2 tree topics
+```
 
-# View all nodes in tree format
+Display nodes in a tree format:
+```bash
 ros2 tree nodes
+```
 
-# View both topics and nodes together
+Display services in a tree format:
+```bash
+ros2 tree services
+```
+
+Display both topics and nodes together:
+```bash
 ros2 tree all
 ```
 
-### Advanced Options
+### Example Output
 
+#### Topics Tree
+```
+├── calibration
+│   ├── aruco_locator
+│   │   ├── aruco_detections (vision_msgs/msg/Detection2DArray)
+│   │   └── image_with_detections (sensor_msgs/msg/Image)
+│   └── extrinsic_solver
+│       ├── calibration_quality (std_msgs/msg/String)
+│       └── extrinsic_transform (geometry_msgs/msg/TransformStamped)
+├── chatter (std_msgs/msg/String)
+├── parameter_events (rcl_interfaces/msg/ParameterEvent)
+└── rosout (rcl_interfaces/msg/Log)
+```
+
+#### Nodes Tree
+```
+├── calibration
+│   ├── aruco_locator
+│   │   └── aruco_locator
+│   ├── calibration_board_locator
+│   │   └── calibration_board_locator
+│   └── extrinsic_solver
+│       └── extrinsic_solver_node
+├── ros2tree_introspection
+└── talker
+```
+
+#### Services Tree
+```
+├── add_two_ints
+├── calibration
+│   ├── aruco_locator
+│   │   └── aruco_locator
+│   │       ├── describe_parameters
+│   │       ├── get_parameters
+│   │       ├── list_parameters
+│   │       └── set_parameters
+│   └── extrinsic_solver
+│       └── extrinsic_solver_node
+│           ├── describe_parameters
+│           ├── get_parameters
+│           └── set_parameters
+└── talker
+    ├── describe_parameters
+    └── set_parameters
+```
+
+## Advanced Usage
+
+### Connection Analysis
+
+Show publisher and subscriber connections for topics:
 ```bash
-# Show topic types
-ros2 tree topics
-
-# Hide topic types
-ros2 tree topics --no-types
-
-# Show connections (publishers/subscribers)
 ros2 tree topics --connections
+```
+
+Show connections for nodes (publishers, subscribers, service servers/clients):
+```bash
 ros2 tree nodes --connections
+```
 
-# Use ASCII characters instead of Unicode
+Show service server and client connections:
+```bash
+ros2 tree services --connections
+```
+
+Example with connections:
+```
+├── add_two_ints
+│   └── < calls: /service_client_node
+├── chatter (std_msgs/msg/String)
+│   ├── ↑ publishes: /talker
+│   └── ↓ subscribes: /listener
+```
+
+### Display Options
+
+Hide topic types:
+```bash
+ros2 tree topics --no-types
+```
+
+Use ASCII characters instead of Unicode (for better compatibility):
+```bash
 ros2 tree all --no-unicode
+```
 
-# Combined view without connections
+Show type prefixes for easier grep filtering:
+```bash
+ros2 tree topics --show-prefixes
+```
+
+Verbose output with detailed connection information:
+```bash
+ros2 tree all --verbose
+```
+
+Combined view without connections:
+```bash
 ros2 tree all --no-connections
 ```
 
-## Example Output
+### Command Options Summary
 
-### Topics Tree
-```
-📡 Topics:
-  ├── 📁 parameter_events/
-  │   └── 📡 parameter_events (rcl_interfaces/msg/ParameterEvent)
-  ├── 📁 rosout/
-  │   └── 📡 rosout (rcl_interfaces/msg/Log)
-  └── 📁 turtle1/
-      ├── 📡 cmd_vel (geometry_msgs/msg/Twist)
-      └── 📡 pose (turtlesim/msg/Pose)
-```
+#### `ros2 tree topics`
+- `--no-types`: Do not display topic types
+- `--no-unicode`: Use ASCII characters instead of Unicode
+- `--connections`: Show publisher and subscriber connections
+- `--show-prefixes`: Show type prefixes (topic:, ns:) for grep filtering
+- `--verbose, -v`: Show detailed connection information
 
-### Nodes Tree
-```
-🔧 Nodes:
-  ├── 🔧 ros2tree_introspection
-  ├── 🔧 teleop_turtle
-  └── 🔧 turtlesim
-```
+#### `ros2 tree nodes`
+- `--no-unicode`: Use ASCII characters instead of Unicode
+- `--connections`: Show node connections (publishers, subscribers, services)
+- `--show-prefixes`: Show type prefixes (node:, ns:) for grep filtering
+- `--verbose, -v`: Show detailed connection information
 
-### Combined View with Connections
-```
-🌳 ROS2 System Tree
+#### `ros2 tree services`
+- `--no-unicode`: Use ASCII characters instead of Unicode
+- `--connections`: Show service server and client connections
+- `--show-prefixes`: Show type prefixes (service:, ns:) for grep filtering
+- `--verbose, -v`: Show detailed connection information
 
-📡 Topics:
-  ├── 📡 /turtle1/cmd_vel (geometry_msgs/msg/Twist)
-  │   ├── ➡️  /teleop_turtle
-  │   └── ⬅️  /turtlesim
-  └── 📡 /turtle1/pose (turtlesim/msg/Pose)
-      └── ➡️  /turtlesim
-
-🔧 Nodes:
-  ├── 🔧 teleop_turtle
-  │   └── ➡️  /turtle1/cmd_vel
-  └── 🔧 turtlesim
-      ├── ➡️  /turtle1/pose
-      └── ⬅️  /turtle1/cmd_vel
-```
+#### `ros2 tree all`
+- `--no-types`: Do not display topic types
+- `--no-unicode`: Use ASCII characters instead of Unicode
+- `--no-connections`: Do not show connections between nodes and topics
+- `--show-prefixes`: Show type prefixes for grep filtering
+- `--verbose, -v`: Show detailed connection information
 
 ## Requirements
 
-- ROS2 (Humble or later)
-- Python 3.8+
-- rclpy
+- ROS2 (Humble or later recommended)
+- Python 3.8 or higher
+- rclpy (provided by ROS2 installation)
 
 ## Development
 
-### Testing
-
-```bash
-# Run basic functionality test with demo nodes
-ros2 run demo_nodes_cpp talker &
-ros2 tree topics
-ros2 tree nodes
-ros2 tree all
-```
-
-### Code Style
-
-This project follows standard Python conventions:
-- Line length: 120 characters
-- Formatter: black (if available)
-- Linter: flake8
+For development setup, testing procedures, code style guidelines, and contribution instructions, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-Apache License 2.0
+Copyright 2025 Lin Hsiang-Jui
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+See the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+Contributions are welcome! Please feel free to submit issues and pull requests on the [GitHub repository](https://github.com/jerry73204/ros2tree).
