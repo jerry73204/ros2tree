@@ -26,6 +26,7 @@ common_params = {
         "ros2tree.verb": [
             "topics = ros2tree.verb.topics:TopicsVerb",
             "nodes = ros2tree.verb.nodes:NodesVerb",
+            "services = ros2tree.verb.services:ServicesVerb",
             "all = ros2tree.verb.all:AllVerb",
         ],
     },

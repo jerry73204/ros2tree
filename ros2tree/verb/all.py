@@ -39,6 +39,16 @@ class AllVerb(VerbExtension):
             connections = None
             if args.verbose and not args.no_connections:
                 connections = builder.get_node_topic_connections()
+                # Also get service connections in verbose mode
+                service_connections = builder.get_service_connections()
+                # Merge service connections into the main connections dict
+                if service_connections:
+                    connections.update(
+                        {
+                            "node_servers": service_connections.get("node_servers", {}),
+                            "node_clients": service_connections.get("node_clients", {}),
+                        }
+                    )
 
             # Format and display combined view
             output = formatter.format_combined_tree(

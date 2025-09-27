@@ -240,6 +240,178 @@ class TreeBuilder:
 
         return dict(connections)
 
+    def get_service_tree(self, include_types=True):
+        """Get services organized in tree structure."""
+        self._ensure_node()
+
+        cache_key = f"services_{include_types}"
+        if cache_key not in self.topics_cache or self._should_refresh_cache():
+            try:
+                import subprocess
+
+                if include_types:
+                    # Get services with types using ros2 service list -t
+                    result = subprocess.run(
+                        ["ros2", "service", "list", "-t"], capture_output=True, text=True, timeout=5
+                    )
+                    if result.returncode == 0:
+                        service_names_and_types = []
+                        for line in result.stdout.split("\n"):
+                            line = line.strip()
+                            if line and not line.startswith("WARNING"):
+                                # Parse format: "/service_name [service_type]"
+                                if " [" in line and line.endswith("]"):
+                                    service_name = line.split(" [")[0]
+                                    service_type = line.split(" [")[1][:-1]  # Remove closing ]
+                                    service_names_and_types.append((service_name, service_type))
+                                else:
+                                    # Fallback if format is unexpected
+                                    service_names_and_types.append((line, "unknown"))
+                    else:
+                        service_names_and_types = []
+                else:
+                    # Just get service names
+                    result = subprocess.run(["ros2", "service", "list"], capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        service_names = [
+                            line.strip()
+                            for line in result.stdout.split("\n")
+                            if line.strip() and not line.startswith("WARNING")
+                        ]
+                        service_names_and_types = [(name, None) for name in service_names]
+                    else:
+                        service_names_and_types = []
+            except:
+                service_names_and_types = []
+
+            self.topics_cache[cache_key] = self._build_service_tree(service_names_and_types, include_types)
+            self.last_update = time.time()
+
+        return self.topics_cache[cache_key]
+
+    def get_service_connections(self):
+        """Get connections between services and nodes."""
+        self._ensure_node()
+
+        cache_key = "service_connections"
+        if cache_key not in self.nodes_cache or self._should_refresh_cache():
+            connections = self._get_service_connections()
+            self.nodes_cache[cache_key] = connections
+            self.last_update = time.time()
+
+        return self.nodes_cache[cache_key]
+
+    def _build_service_tree(self, service_names_and_types, include_types=True):
+        """Build hierarchical service tree from flat service list."""
+        tree = {}
+
+        for service_name, service_type in service_names_and_types:
+            # Split service path into components
+            parts = [part for part in service_name.split("/") if part]
+
+            # Navigate/create tree structure
+            current = tree
+            for i, part in enumerate(parts[:-1]):  # All but last component
+                if part not in current:
+                    current[part] = {}
+                elif "_service_info" in current[part]:
+                    # This part was already a service, but now we need it as a namespace
+                    # Convert it to a namespace that also contains the service info
+                    service_info = current[part]["_service_info"]
+                    current[part] = {"_self_service_info": service_info}
+                current = current[part]
+
+            # Add final service
+            final_part = parts[-1] if parts else service_name
+            service_info = {"full_name": service_name}
+            if include_types and service_type:
+                service_info["type"] = service_type
+
+            if final_part in current and "_service_info" not in current[final_part]:
+                # This final part already exists as a namespace, add service info to it
+                current[final_part]["_service_info"] = service_info
+            else:
+                # Normal case - create new service entry
+                current[final_part] = {"_service_info": service_info}
+
+        return tree
+
+    def _get_service_connections(self):
+        """Get service server and client information."""
+        connections = {
+            "servers": defaultdict(list),  # service -> [nodes]
+            "clients": defaultdict(list),  # service -> [nodes]
+            "node_servers": defaultdict(list),  # node -> [services]
+            "node_clients": defaultdict(list),  # node -> [services]
+        }
+
+        try:
+            import subprocess
+            import re
+
+            # Get all nodes first
+            try:
+                result = subprocess.run(["ros2", "node", "list"], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    node_names = [
+                        line.strip()
+                        for line in result.stdout.split("\n")
+                        if line.strip() and not line.startswith("WARNING")
+                    ]
+                else:
+                    node_names = self.node.get_node_names()
+            except:
+                node_names = self.node.get_node_names()
+
+            # For each node, get its service server and client info
+            for node_name in node_names:
+                try:
+                    result = subprocess.run(
+                        ["ros2", "node", "info", node_name], capture_output=True, text=True, timeout=5
+                    )
+                    if result.returncode != 0:
+                        continue
+
+                    lines = result.stdout.split("\n")
+                    current_section = None
+
+                    for line in lines:
+                        line = line.strip()
+
+                        if line == "Service Servers:":
+                            current_section = "servers"
+                            continue
+                        elif line == "Service Clients:":
+                            current_section = "clients"
+                            continue
+                        elif line in ["Subscribers:", "Publishers:", "Action Servers:", "Action Clients:"]:
+                            current_section = None
+                            continue
+
+                        # Parse service lines in format: "    /service_name: service_type"
+                        if current_section and ":" in line and line.strip().startswith("/"):
+                            # Extract service name from indented lines
+                            service_match = re.match(r"\s*(/\S+):", line)
+                            if service_match:
+                                service_name = service_match.group(1)
+
+                                if current_section == "servers":
+                                    connections["servers"][service_name].append(node_name)
+                                    connections["node_servers"][node_name].append(service_name)
+                                elif current_section == "clients":
+                                    connections["clients"][service_name].append(node_name)
+                                    connections["node_clients"][node_name].append(service_name)
+
+                except Exception:
+                    # Skip this node if we can't get info
+                    continue
+
+        except Exception:
+            # If all fails, return empty connections but don't crash
+            pass
+
+        return dict(connections)
+
     def cleanup(self):
         """Clean up resources."""
         if self.node:
