@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ros2tree"
+version = "0.1.0"
+description = "ROS2 command extension that displays topics, nodes, and services in a hierarchical tree format"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    {name = "Lin Hsiang-Jui", email = "jerry73204@gmail.com"}
+]
+maintainers = [
+    {name = "Lin Hsiang-Jui", email = "jerry73204@gmail.com"}
+]
+keywords = ["ros2", "tree", "visualization", "topics", "nodes", "services", "introspection"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Distributed Computing",
+]
+dependencies = [
+    "setuptools",
+]
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov"]
+
+[project.urls]
+Homepage = "https://github.com/jerry73204/ros2tree"
+"Bug Reports" = "https://github.com/jerry73204/ros2tree/issues"
+Source = "https://github.com/jerry73204/ros2tree"
+Documentation = "https://github.com/jerry73204/ros2tree#readme"
+
+[project.entry-points."ros2cli.command"]
+tree = "ros2tree.command.tree:TreeCommand"
+
+[project.entry-points."ros2cli.extension_point"]
+"ros2tree.verb" = "ros2tree.verb:VerbExtension"
+
+[project.entry-points."ros2tree.verb"]
+topics = "ros2tree.verb.topics:TopicsVerb"
+nodes = "ros2tree.verb.nodes:NodesVerb"
+services = "ros2tree.verb.services:ServicesVerb"
+all = "ros2tree.verb.all:AllVerb"
+
+[tool.setuptools.packages.find]
+exclude = ["test*", "tests*"]

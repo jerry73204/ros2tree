@@ -1,3 +1,11 @@
+include README.md
+include LICENSE
+include CONTRIBUTING.md
+include CLAUDE.md
 include package.xml
-recursive-include resource *
-recursive-include ros2tree *.py
+include pyproject.toml
+include resource/ros2tree
+recursive-exclude * __pycache__
+recursive-exclude * *.pyc
+recursive-exclude * *.pyo
+recursive-exclude tests *
