@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>ros2tree</name>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <description>ROS2 command extension for displaying topics and nodes in tree view</description>
   <maintainer email="developer@example.com">ROS2 Tree Developer</maintainer>
   <license>Apache-2.0</license>
