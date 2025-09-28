@@ -1,4 +1,5 @@
 from ros2cli.verb import VerbExtension
+
 from ros2tree.api.tree_builder import TreeBuilder
 from ros2tree.api.tree_formatter import TreeFormatter
 
@@ -56,7 +57,7 @@ class AllVerb(VerbExtension):
             )
             print(output)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, OSError) as e:
             print(f"Error retrieving ROS2 system information: {e}")
             return 1
         finally:

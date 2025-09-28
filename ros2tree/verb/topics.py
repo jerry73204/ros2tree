@@ -1,7 +1,7 @@
 from ros2cli.verb import VerbExtension
+
 from ros2tree.api.tree_builder import TreeBuilder
 from ros2tree.api.tree_formatter import TreeFormatter
-import argparse
 
 
 class TopicsVerb(VerbExtension):
@@ -45,7 +45,7 @@ class TopicsVerb(VerbExtension):
             )
             print(output)
 
-        except Exception as e:
+        except (RuntimeError, ValueError, OSError) as e:
             print(f"Error retrieving topics: {e}")
             return 1
         finally:

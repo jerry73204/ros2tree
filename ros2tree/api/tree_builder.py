@@ -1,8 +1,9 @@
+import subprocess
+import time
+from collections import defaultdict
+
 import rclpy
 from rclpy.node import Node
-from collections import defaultdict
-import threading
-import time
 
 
 class TreeBuilder:
@@ -36,26 +37,23 @@ class TreeBuilder:
 
             # Check if we're missing topics by comparing with ros2 topic list
             try:
-                import subprocess
 
                 result = subprocess.run(["ros2", "topic", "list"], capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     # Parse the output to get all topic names
-                    subprocess_topics = set(
-                        [
-                            line.strip()
-                            for line in result.stdout.split("\n")
-                            if line.strip() and not line.startswith("WARNING")
-                        ]
-                    )
-                    api_topics = set([name for name, _ in topic_names_and_types])
+                    subprocess_topics = {
+                        line.strip()
+                        for line in result.stdout.split("\n")
+                        if line.strip() and not line.startswith("WARNING")
+                    }
+                    api_topics = {name for name, _ in topic_names_and_types}
 
                     missing_topics = subprocess_topics - api_topics
                     if missing_topics:
                         # Add missing topics with unknown types
                         for topic_name in missing_topics:
                             topic_names_and_types.append((topic_name, ["unknown"]))
-            except:
+            except (subprocess.SubprocessError, OSError, ValueError):
                 pass
 
             self.topics_cache["topics"] = self._build_topic_tree(topic_names_and_types, include_types)
@@ -70,7 +68,6 @@ class TreeBuilder:
         if "nodes" not in self.nodes_cache or self._should_refresh_cache():
             # Try to get full node names with namespaces using subprocess
             try:
-                import subprocess
 
                 result = subprocess.run(["ros2", "node", "list"], capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
@@ -83,7 +80,7 @@ class TreeBuilder:
                 else:
                     # Fallback to API method
                     node_names = self.node.get_node_names()
-            except:
+            except (subprocess.SubprocessError, OSError, ValueError):
                 # Fallback to API method if subprocess fails
                 node_names = self.node.get_node_names()
 
@@ -174,7 +171,6 @@ class TreeBuilder:
         }
 
         try:
-            import subprocess
             import re
 
             # Get all nodes first
@@ -188,7 +184,7 @@ class TreeBuilder:
                     ]
                 else:
                     node_names = self.node.get_node_names()
-            except:
+            except (subprocess.SubprocessError, OSError, ValueError):
                 node_names = self.node.get_node_names()
 
             # For each node, get its publisher and subscriber info
@@ -230,11 +226,11 @@ class TreeBuilder:
                                     connections["subscribers"][topic_name].append(node_name)
                                     connections["node_subs"][node_name].append(topic_name)
 
-                except Exception as e:
+                except (subprocess.SubprocessError, OSError, ValueError, RuntimeError):
                     # Skip this node if we can't get info
                     continue
 
-        except Exception as e:
+        except (subprocess.SubprocessError, OSError, ValueError, RuntimeError):
             # If all fails, return empty connections but don't crash
             pass
 
@@ -247,8 +243,6 @@ class TreeBuilder:
         cache_key = f"services_{include_types}"
         if cache_key not in self.topics_cache or self._should_refresh_cache():
             try:
-                import subprocess
-
                 if include_types:
                     # Get services with types using ros2 service list -t
                     result = subprocess.run(
@@ -281,7 +275,7 @@ class TreeBuilder:
                         service_names_and_types = [(name, None) for name in service_names]
                     else:
                         service_names_and_types = []
-            except:
+            except (subprocess.SubprocessError, OSError, ValueError):
                 service_names_and_types = []
 
             self.topics_cache[cache_key] = self._build_service_tree(service_names_and_types, include_types)
@@ -346,7 +340,6 @@ class TreeBuilder:
         }
 
         try:
-            import subprocess
             import re
 
             # Get all nodes first
@@ -360,7 +353,7 @@ class TreeBuilder:
                     ]
                 else:
                     node_names = self.node.get_node_names()
-            except:
+            except (subprocess.SubprocessError, OSError, ValueError):
                 node_names = self.node.get_node_names()
 
             # For each node, get its service server and client info
@@ -402,11 +395,11 @@ class TreeBuilder:
                                     connections["clients"][service_name].append(node_name)
                                     connections["node_clients"][node_name].append(service_name)
 
-                except Exception:
+                except (subprocess.SubprocessError, OSError, ValueError, RuntimeError):
                     # Skip this node if we can't get info
                     continue
 
-        except Exception:
+        except (subprocess.SubprocessError, OSError, ValueError, RuntimeError):
             # If all fails, return empty connections but don't crash
             pass
 
