@@ -166,10 +166,10 @@ Connection information follows this structure:
 - **README.md**: User-facing documentation (no development content)
 - **CONTRIBUTING.md**: All development and contribution guidelines
 - **LICENSE**: Apache License 2.0 with Lin Hsiang-Jui as copyright holder
-- **RELEASE_NOTES_v0.1.0.md**: Release notes for v0.1.0
+- **RELEASE_NOTES_v{version}.md**: Release notes for current version
 - **CLAUDE.md**: This file for Claude Code guidance
 
 ### Distribution
-- Wheel filename: `ros2tree-0.1.0-py3-none-any.whl`
+- Wheel filename: `ros2tree-{version}-py3-none-any.whl`
 - Built with: `make wheel`
 - Located in: `dist/` directory after build

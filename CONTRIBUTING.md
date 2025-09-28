@@ -116,7 +116,7 @@ To build a distributable wheel package:
 make wheel
 ```
 
-The wheel file will be created in the `dist/` directory as `ros2tree-0.1.0-py3-none-any.whl`.
+The wheel file will be created in the `dist/` directory as `ros2tree-{version}-py3-none-any.whl`.
 
 ### Building in ROS2 Workspace
 
