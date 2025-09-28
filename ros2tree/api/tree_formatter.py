@@ -276,7 +276,7 @@ class TreeFormatter:
                     service_name = service
                     for node_name in node_variations:
                         if service.startswith(node_name + "/"):
-                            service_name = service[len(node_name + "/") :]
+                            service_name = service[len(node_name + "/"):]
                             break
                     lines.append(f"{connection_prefix}{branch}{self.symbols['server']}{service_name}")
 
@@ -288,7 +288,7 @@ class TreeFormatter:
                     service_name = service
                     for node_name in node_variations:
                         if service.startswith(node_name + "/"):
-                            service_name = service[len(node_name + "/") :]
+                            service_name = service[len(node_name + "/"):]
                             break
                     lines.append(f"{connection_prefix}{branch}{self.symbols['client']}{service_name}")
 

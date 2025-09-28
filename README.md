@@ -8,12 +8,10 @@ ros2tree provides an intuitive way to visualize the structure of your ROS2 syste
 
 ## Installation
 
-### From GitHub Release (Recommended)
-
-Download the latest wheel file from the [GitHub releases](https://github.com/jerry73204/ros2tree/releases):
+### From PyPI (Recommended)
 
 ```bash
-pip install ros2tree-0.1.0-py3-none-any.whl
+pip install ros2tree
 ```
 
 ### Alternative: ROS2 Workspace Installation
